@@ -211,9 +211,21 @@ Run it:
 docker run -d -p 8062:8062 climate-visibility
 ```
 
+## Project Architecture
+
+![Project Architecture](https://user-images.githubusercontent.com/71321529/192722336-54016f79-89ef-4c8c-9d71-a6e91ebab03f.jpeg)
+
+## Data Collection Architecture
+
+![Data Collection Architecture](https://user-images.githubusercontent.com/71321529/192721926-de265f9b-f301-4943-ac7d-948bff7be9a0.jpeg)
+
+## Deployment Architecture
+
+![Deployment Architecture](https://user-images.githubusercontent.com/104005791/199660875-c8e63457-432a-44cb-8a95-800870f3da15.png)
+
 ## Results
 
-The repository includes UI screenshots in the `Results` directory showing the application input and prediction output pages.
+The repository also includes UI screenshots in the `Results` directory showing the application input and prediction output pages.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/mohdsaif13/Climate-Visibility/main/Results/UI.JPG" alt="Climate Visibility prediction interface" width="820">
