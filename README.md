@@ -1,155 +1,240 @@
+# Climate Visibility Prediction
 
-# Visibility distance prediction
+A machine learning project for estimating **visibility distance from weather conditions**. The project takes weather observations, runs them through a training pipeline, and exposes a simple web interface for generating visibility predictions.
 
-## Problem Statement :-
+## What this project does
 
-The objective of this project is to develop a machine learning model that can accurately predict the maximum visibility distance in a given location and weather condition. The model should take into account various weather parameters such as humidity, temperature, wind speed, and atmospheric pressure, as well as geographical features such as elevation, terrain, and land cover. The model should be trained on a large dataset of historical weather and visibility data, and validated using a separate test dataset. The ultimate goal is to provide a tool that can help improve safety and efficiency in various applications such as aviation, transportation, and outdoor activities.
+Poor visibility can affect aviation, road transportation, and other outdoor operations. The idea behind this project is to use historical weather data to learn the relationship between atmospheric conditions and measured visibility.
 
+The repository includes the complete flow rather than only a trained model:
 
-## Tech Stack Used
+**Data → Validation → Transformation → Model Selection → Hyperparameter Tuning → Prediction → Web App**
 
-1. Python
-2. FastAPI
-3. Machine learning algorithms
-4. Docker
-5. MongoDB
+## Main features
 
-## Infrastructure required
+- Weather data ingestion with MongoDB support
+- Data validation before model training
+- Feature scaling using `StandardScaler`
+- Comparison of multiple regression algorithms
+- Hyperparameter tuning with `GridSearchCV`
+- Model serialization and artifact management
+- AWS S3 support for storing and retrieving trained models
+- Flask-based interface for training and prediction
+- Docker support for packaging the application
+- Project structure separated into components, configuration, pipeline, utilities, logging, and exceptions
 
-1. AWS S3
-2. Azure
-3. Github Actions
+## Weather features used
 
-## How to run
+The project schema works with weather observations such as:
 
-Before you run this project make sure you have MongoDB Atlas account and you have the shipping dataset into it.
+- Dry-bulb temperature
+- Relative humidity
+- Wind speed
+- Wind direction
+- Station pressure
+- Sea-level pressure
+- Precipitation
+- Visibility (target)
 
-Step 1. Cloning the repository.
+The current schema removes a few fields before training, including `DATE`, `WETBULBTEMPF`, `DewPointTempF`, `StationPressure`, and `Precip`.
 
+## Model training
+
+The training component compares several regression models:
+
+- Linear Regression
+- Ridge Regression
+- Lasso Regression
+- Random Forest Regression
+- Gradient Boosting Regression
+
+The best-performing model is selected using **R² score** on the validation split. The selected model is then tuned with `GridSearchCV` using the parameter ranges defined in `config/model.yaml`.
+
+The trained estimator is wrapped together with the preprocessing object so the same transformation can be used during prediction.
+
+## Project pipeline
+
+### 1. Data Ingestion
+Weather data is collected and prepared through the data ingestion component. MongoDB is supported as the data source.
+
+### 2. Data Validation
+Incoming data is checked against the project schema before moving forward in the pipeline.
+
+### 3. Data Transformation
+The validated data is split into training and testing sets. Numerical inputs are standardized with `StandardScaler`, and the fitted preprocessing object is saved as an artifact.
+
+### 4. Model Training
+Several regression models are tested. The model configuration in `config/model.yaml` controls the hyperparameter search.
+
+### 5. Model Evaluation
+The final model is evaluated using the R² metric. The project also keeps the model score as part of the training flow.
+
+### 6. Model Storage
+The trained model can be synchronized with an AWS S3 bucket through the project's S3 utility.
+
+### 7. Prediction
+The prediction pipeline downloads the stored model when needed, loads it, applies the saved preprocessing step, and returns the predicted visibility value.
+
+## Web application
+
+The project includes a Flask application in `app.py`.
+
+Available routes:
+
+- `/` — home page
+- `/train` — starts the training pipeline
+- `/predict` — accepts prediction input and displays the result
+
+The application is configured to run on port **8062**.
+
+## Tech stack
+
+**Languages & libraries**
+
+- Python
+- Pandas
+- NumPy
+- Scikit-learn
+- XGBoost
+- Matplotlib
+- Seaborn
+- FastAPI / Flask components
+
+**Data & cloud**
+
+- MongoDB / MongoDB Atlas
+- AWS S3
+- Azure
+
+**Deployment & tooling**
+
+- Docker
+- GitHub Actions
+- YAML-based configuration
+
+## Project structure
+
+```text
+Climate-Visibility/
+│
+├── app.py
+├── Dockerfile
+├── requirements.txt
+├── model.pkl
+│
+├── config/
+│   ├── model.yaml
+│   ├── prediction_schema.yaml
+│   └── schema.yaml
+│
+├── notebooks/
+│   ├── EDA.ipynb
+│   ├── EDA_raw_data.ipynb
+│   ├── Feature_engineering and model training.ipynb
+│   └── mongodbupload.ipynb
+│
+├── src/
+│   ├── cloud_storage/
+│   ├── components/
+│   ├── configuration/
+│   ├── data_access/
+│   ├── exception/
+│   ├── ml/
+│   ├── pipeline/
+│   └── utils/
+│
+├── artifacts/
+├── Results/
+├── static/
+├── templates/
+└── uploaded_data/
 ```
 
-git clone https://github.com/Machine-Learning-01/Customer_segmentation.git
+## Running the project locally
 
+### Clone
+
+```bash
+git clone https://github.com/mohdsaif13/Climate-Visibility.git
+cd Climate-Visibility
 ```
 
-Step 2. Create a conda environment.
+### Create an environment
 
-```
+The original project setup uses a Conda environment:
 
+```bash
 conda create --prefix venv python=3.7 -y
-
-```
-
-```
-
 conda activate venv/
-
 ```
 
-Step 3. Install the requirements
+### Install dependencies
 
-```
-
+```bash
 pip install -r requirements.txt
-
 ```
 
-Step 4. Export the environment variable
+### Configure environment variables
+
+Set the required AWS and MongoDB values in your environment:
 
 ```bash
-
 export AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID>
-
-
 export AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY>
-
-
 export AWS_DEFAULT_REGION=<AWS_DEFAULT_REGION>
-
-
-export MONGODB_URL= <MONGODB_URL>
-
-
+export MONGODB_URL=<MONGODB_URL>
 ```
 
-Step 5. Run the application server
+### Start the application
 
-```
-
+```bash
 python app.py
-
 ```
 
-Step 6. Train application
+Then open:
+
+```text
+http://localhost:8062/
+```
+
+## Docker
+
+Build the image:
 
 ```bash
-
-http://localhost:5000/train
-
+docker build -t climate-visibility .
 ```
 
-Step 7. Prediction application
+Run it:
 
 ```bash
-
-http://localhost:5000/predict
-
+docker run -d -p 8062:8062 climate-visibility
 ```
 
-## Run locally
+## Results
 
-1. Check if the Dockerfile is available in the project directory
-2. Build the Docker image
+The repository includes UI screenshots in the `Results` directory showing the application input and prediction output pages.
 
-```
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mohdsaif13/Climate-Visibility/main/Results/UI.JPG" alt="Climate Visibility prediction interface" width="820">
+</p>
 
-docker build --build-arg AWS_ACCESS_KEY_ID=<AWS_ACCESS_KEY_ID> --build-arg AWS_SECRET_ACCESS_KEY=<AWS_SECRET_ACCESS_KEY> --build-arg AWS_DEFAULT_REGION=<AWS_DEFAULT_REGION> --build-arg MONGODB_URL=<MONGODB_URL> . 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/mohdsaif13/Climate-Visibility/main/Results/Output%20UI.JPG" alt="Climate Visibility prediction output" width="820">
+</p>
 
-```
+## Why I built this
 
-3. Run the Docker image
+I wanted to work through the full machine learning lifecycle on a real weather dataset instead of stopping after model training. This project gave me hands-on practice with data validation, preprocessing, model comparison, hyperparameter tuning, model packaging, cloud storage, and serving predictions through a web application.
 
-```
+## Project notes
 
-docker run -d -p 5000:5000 <IMAGE_NAME>
+This repository is a practical project and the current implementation reflects the code and configuration included here. Cloud services such as MongoDB Atlas, AWS S3, and Azure require the appropriate credentials and setup before the complete pipeline can be run.
 
-```
+## Author
 
-## Project Architecture -
+**Md Saif Ali**
 
-![WhatsApp Image 2022-09-22 at 15 29 19](https://user-images.githubusercontent.com/71321529/192722336-54016f79-89ef-4c8c-9d71-a6e91ebab03f.jpeg)
+Data Science | Machine Learning | AI/ML
 
-## Data Collection Architecture -
-
-![WhatsApp Image 2022-09-22 at 15 29 10](https://user-images.githubusercontent.com/71321529/192721926-de265f9b-f301-4943-ac7d-948bff7be9a0.jpeg)
-
-## Deployment Architecture -
-
-![deployment](https://user-images.githubusercontent.com/104005791/199660875-c8e63457-432a-44cb-8a95-800870f3da15.png)
-
-## Models Used
-
-* [K-Means](https://www.javatpoint.com/k-means-clustering-algorithm-in-machine-learning)
-* [LogisticRegression](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
-
-From these above models after hyperparameter optimization we selected these two models which were K-Means for clustering and Logistic Regression for classification and used the following in Pipeline.
-
-* GridSearchCV is used for Hyperparameter Optimization in the pipeline.
-
-## `src` is the main package folder which contains
-
-**Components** : Contains all components of Machine Learning Project
-
-- Data Ingestion
-- Data Validation
-- Data Transformation
-- Data Clustering
-- Model Trainer
-- Model Evaluation
-- Model Pusher
-
-**Custom Logger and Exceptions** are used in the Project for better debugging purposes.
-
-## Conclusion
-
-- This Project can be used in real-life by Users.
+[GitHub](https://github.com/mohdsaif13) · [LinkedIn](https://www.linkedin.com/in/md-saif-ali-a3250825b/)
